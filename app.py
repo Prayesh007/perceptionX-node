@@ -202,8 +202,8 @@ import requests
 import tempfile
 import subprocess
 from io import BytesIO
-from fastapi import FastAPI
-
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from ultralytics import YOLO
@@ -211,34 +211,25 @@ from PIL import Image
 import numpy as np
 import cv2
 from bson import ObjectId
-import imageio_ffmpeg as ffmpeg
 from bson.binary import Binary
+import imageio_ffmpeg as ffmpeg
 
-app = FastAPI()  # 👈 This must exist!
-
-
-# Optional FastAPI service
+# --------------------- CONFIG ------------------------
 RUN_AS_SERVICE = os.environ.get("RUN_AS_SERVICE", "false").lower() in ("1", "true", "yes")
-FASTAPI_PORT = int(os.environ.get("FASTAPI_PORT", 8000))
-
-# Use tmp for matplotlib config (if matplotlib imported elsewhere)
-os.environ['MPLCONFIGDIR'] = '/tmp'
-os.environ["ULTRALYTICS_CONFIG_DIR"] = "/tmp/ultralytics"
-
-# Config - prefer environment variables
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://aitools2104:kDTRxzV6MgO4nicA@cluster0.tqkyb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&tls=true&tlsInsecure=false")
+FASTAPI_PORT = int(os.environ.get("PORT", 8000))  # Render sets PORT env
+MONGO_URI = os.environ.get("MONGO_URI")
 DATABASE_NAME = os.environ.get("DATABASE_NAME", "test")
 COLLECTION_NAME = os.environ.get("COLLECTION_NAME", "files")
-
-# Model weights path and optional download URL
 WEIGHTS_PATH = os.environ.get("WEIGHTS_PATH", "./yolov11/best.pt")
-MODEL_WEIGHTS_URL = os.environ.get("MODEL_WEIGHTS_URL", "")  # optional S3/GDrive URL
+MODEL_WEIGHTS_URL = os.environ.get("MODEL_WEIGHTS_URL", "")
+
+os.environ['MPLCONFIGDIR'] = '/tmp'
+os.environ["ULTRALYTICS_CONFIG_DIR"] = "/tmp/ultralytics"
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
-# global model (loaded once in service mode)
 _MODEL = None
 
 # --------------------- MODEL ------------------------
@@ -247,7 +238,7 @@ def download_weights_if_missing():
         print(f"✅ Model exists at: {WEIGHTS_PATH}")
         return True
     if not MODEL_WEIGHTS_URL:
-        print(f"❌ Weights not found at {WEIGHTS_PATH} and no MODEL_WEIGHTS_URL provided.")
+        print(f"❌ Weights not found and no MODEL_WEIGHTS_URL provided.")
         return False
     try:
         os.makedirs(os.path.dirname(WEIGHTS_PATH), exist_ok=True)
@@ -263,12 +254,10 @@ def download_weights_if_missing():
         print(f"❌ Error downloading model: {e}")
         return False
 
-
 def load_model():
     global _MODEL
     if _MODEL is not None:
         return _MODEL
-    print(f"🔍 Checking if model exists: {WEIGHTS_PATH}")
     if not os.path.exists(WEIGHTS_PATH):
         ok = download_weights_if_missing()
         if not ok:
@@ -278,130 +267,58 @@ def load_model():
     print("🧠 YOLO model loaded.")
     return _MODEL
 
-
 # --------------------- MONGO HELPERS ------------------------
 async def fetch_file_from_mongo(file_id):
-    print(f"🔎 Fetching file from MongoDB ID: {file_id}")
     try:
         obj_id = ObjectId(file_id)
-    except Exception as e:
-        print(f"❌ Invalid ObjectId: {e}")
+    except:
         return None, None
-
-    try:
-        doc = await collection.find_one({"_id": obj_id})
-    except Exception as e:
-        print(f"❌ MongoDB fetch error: {e}")
-        return None, None
-
+    doc = await collection.find_one({"_id": obj_id})
     if not doc or "data" not in doc:
-        print("❌ File not found or data missing.")
         return None, None
-
-    data = bytes(doc["data"])  # convert Binary → bytes
-    mimetype = doc.get("mimetype", "")
-    filename = doc.get("filename", "file")
-    print(f"📦 File found: {filename} (mimetype: {mimetype}) size={len(data)} bytes")
-    return data, mimetype
-
+    return bytes(doc["data"]), doc.get("mimetype", "")
 
 async def save_processed_file(file_id, processed_bytes):
     try:
         obj_id = ObjectId(file_id)
-    except Exception as e:
-        print(f"❌ Invalid ObjectId: {e}")
+    except:
         return False
+    result = await collection.update_one(
+        {"_id": obj_id},
+        {"$set": {"processedData": Binary(processed_bytes)}}
+    )
+    return result.modified_count > 0 or result.matched_count > 0
 
-    try:
-        result = await collection.update_one(
-            {"_id": obj_id},
-            {"$set": {"processedData": Binary(processed_bytes)}}
-        )
-        if result.modified_count > 0:
-            print(f"✅ Processed file saved to MongoDB for file ID: {file_id}")
-            return True
-        elif result.matched_count > 0:
-            print("⚠️ Document found, but processedData unchanged.")
-            return True
-        else:
-            print("❌ No matching document found. Update failed.")
-            return False
-    except Exception as e:
-        print(f"❌ Error updating MongoDB: {e}")
-        return False
-
-
-# --------------------- IMAGE ------------------------
+# --------------------- PROCESSING ------------------------
 async def process_image(file_id, model):
-    image_data, mimetype = await fetch_file_from_mongo(file_id)
-    if not image_data:
+    data, _ = await fetch_file_from_mongo(file_id)
+    if not data:
         return False
-
-    try:
-        img = Image.open(BytesIO(image_data)).convert("RGB")
-    except Exception as e:
-        print(f"❌ Image decode error: {e}")
-        return False
-
-    image_np = np.array(img)
-    results = model(image_np)
-    annotated = results[0].plot()  # RGB ndarray
-    try:
-        bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
-    except Exception:
-        bgr = annotated
-
+    img = Image.open(BytesIO(data)).convert("RGB")
+    results = model(np.array(img))
+    annotated = results[0].plot()
+    bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
     success, buffer = cv2.imencode(".jpg", bgr)
     if not success:
-        print("❌ cv2.imencode failed.")
         return False
-
-    processed_bytes = buffer.tobytes()
-    print("Progress: 100%")
-    return await save_processed_file(file_id, processed_bytes)
-
-
-# --------------------- VIDEO ------------------------
-def convert_to_mp4(input_file):
-    ffmpeg_exe = ffmpeg.get_ffmpeg_exe()
-    output_file = os.path.splitext(input_file)[0] + ".mp4"
-    command = [
-        ffmpeg_exe, "-y", "-i", input_file,
-        "-vcodec", "libx264", "-crf", "23", "-preset", "fast", output_file
-    ]
-    try:
-        subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return output_file
-    except Exception as e:
-        print(f"❌ FFmpeg conversion failed: {e}")
-        return input_file
-
+    return await save_processed_file(file_id, buffer.tobytes())
 
 async def process_video(file_id, model):
-    video_data, mimetype = await fetch_file_from_mongo(file_id)
-    if not video_data:
+    data, _ = await fetch_file_from_mongo(file_id)
+    if not data:
         return False
-
     tmp_in = os.path.join(tempfile.gettempdir(), f"input_{file_id}.mp4")
+    tmp_out = os.path.join(tempfile.gettempdir(), f"out_{file_id}.avi")
     with open(tmp_in, "wb") as f:
-        f.write(video_data)
-
+        f.write(data)
     cap = cv2.VideoCapture(tmp_in)
     if not cap.isOpened():
-        print("❌ Error opening video.")
         return False
-
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
-    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    tmp_out = os.path.join(tempfile.gettempdir(), f"out_{file_id}.avi")
-    fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    out = cv2.VideoWriter(tmp_out, fourcc, fps, (width, height))
-
-    processed_frames = 0
-    last_percent = -1
+    out = cv2.VideoWriter(tmp_out, cv2.VideoWriter_fourcc(*"XVID"), fps, (width, height))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -410,108 +327,70 @@ async def process_video(file_id, model):
         annotated = results[0].plot()
         try:
             annotated_bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
-        except Exception:
+        except:
             annotated_bgr = annotated
         out.write(annotated_bgr)
-
-        processed_frames += 1
-        percent = int((processed_frames / total_frames) * 100)
-        if percent != last_percent and percent % 5 == 0:
-            print(f"Progress: {percent}%")
-            last_percent = percent
-
     cap.release()
     out.release()
-
-    mp4_path = convert_to_mp4(tmp_out)
+    # convert to mp4
+    ffmpeg_exe = ffmpeg.get_ffmpeg_exe()
+    mp4_path = tmp_out.replace(".avi", ".mp4")
+    subprocess.run([ffmpeg_exe, "-y", "-i", tmp_out, "-vcodec", "libx264", "-crf", "23", "-preset", "fast", mp4_path],
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with open(mp4_path, "rb") as f:
         processed_video = f.read()
-
-    print("Progress: 100%")
-
-    # cleanup
-    for p in [tmp_in, tmp_out, mp4_path]:
-        try:
-            os.remove(p)
-        except Exception:
-            pass
-
+    for f in [tmp_in, tmp_out, mp4_path]:
+        try: os.remove(f)
+        except: pass
     return await save_processed_file(file_id, processed_video)
 
-
-# --------------------- MAIN ------------------------
 async def run_process(file_id, file_type):
     model = load_model()
     if file_type.startswith("image"):
-        ok = await process_image(file_id, model)
-        return ok
+        return await process_image(file_id, model)
     elif file_type.startswith("video"):
-        ok = await process_video(file_id, model)
-        return ok
+        return await process_video(file_id, model)
     else:
-        print("❌ Invalid file type. Use 'image' or 'video'.")
         return False
 
-
-# CLI mode
 async def cli_main():
     if len(sys.argv) < 3:
         print("Usage: python app.py <file_id> <file_type>")
         sys.exit(1)
+    ok = await run_process(sys.argv[1], sys.argv[2])
+    sys.exit(0 if ok else 2)
 
-    file_id = sys.argv[1]
-    file_type = sys.argv[2]  # "image" or "video"
+# --------------------- FASTAPI ------------------------
+app = FastAPI(title="YOLO Processing Service")
 
-    ok = await run_process(file_id, file_type)
-    if not ok:
-        # non-zero exit codes to indicate error
-        sys.exit(2)
-    else:
-        sys.exit(0)
+class ProcessRequest(BaseModel):
+    fileId: str
+    fileType: str
 
-
+@app.on_event("startup")
+async def startup_event():
+    load_model()
+    print("Service startup complete.")
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "YOLO backend is running!"}
 
-    
-# FastAPI service mode
-if RUN_AS_SERVICE:
-    from fastapi import FastAPI, HTTPException
-    from pydantic import BaseModel
-    import uvicorn
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
-    app = FastAPI(title="YOLO Processing Service")
+@app.post("/process")
+async def process_endpoint(payload: ProcessRequest):
+    ok = await run_process(payload.fileId, payload.fileType)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Processing failed")
+    return {"status": "ok", "fileId": payload.fileId}
 
-    class ProcessRequest(BaseModel):
-        fileId: str
-        fileType: str
-
-    @app.on_event("startup")
-    async def startup_event():
-        # load model once at startup
-        load_model()
-        print("Service startup complete.")
-
-    @app.post("/process")
-    async def process_endpoint(payload: ProcessRequest):
-        file_id = payload.fileId
-        file_type = payload.fileType
-        print(f"API request: process file {file_id} type {file_type}")
-        ok = await run_process(file_id, file_type)
-        if not ok:
-            raise HTTPException(status_code=500, detail="Processing failed")
-        return {"status": "ok", "fileId": file_id}
-
-    @app.get("/health")
-    async def health():
-        return {"status": "ok"}
-
-    if __name__ == "__main__":
-        # run uvicorn if executed directly and RUN_AS_SERVICE is true
+# --------------------- ENTRY POINT ------------------------
+if __name__ == "__main__":
+    if RUN_AS_SERVICE:
+        import uvicorn
         uvicorn.run("app:app", host="0.0.0.0", port=FASTAPI_PORT, reload=False)
-
-else:
-    if __name__ == "__main__":
+    else:
         asyncio.run(cli_main())
