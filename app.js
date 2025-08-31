@@ -16,6 +16,9 @@ const http = require("http");
 const socketIo = require("socket.io");
 const os = require("os");
 
+
+const pythonAPI = process.env.PYTHON_API_URL;  // dynamically read from env
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -189,41 +192,41 @@ app.post("/process", upload.single("file"), async (req, res) => {
 
 // Add a JSON-forwarding endpoint for direct API use (POST /detect)
 app.post("/detect", async (req, res) => {
-    // Accept { fileId, fileType } in body and forward to python service or spawn
     const { fileId, fileType } = req.body || {};
+
     if (!fileId || !fileType) {
         return res.status(400).json({ error: "fileId and fileType required" });
     }
 
-    const pythonApi = (process.env.PYTHON_API_URL || process.env.PY_SERVICE_URL || "").trim() || null;
+    // Read Python API URL from env (set on Render)
+    const pythonApi = (process.env.PYTHON_API_URL || "").trim();
+    const endpoint = pythonApi ? pythonApi.replace(/\/$/, "") + "/process" : null;
 
-    if (pythonApi) {
-        const endpoint = pythonApi.replace(/\/$/, "") + "/process";
+    if (endpoint) {
+        // Call remote Python service
         try {
-            const resp = await axios.post(endpoint, { fileId: fileId.toString(), fileType }, { timeout: PY_TIMEOUT + 10000 });
+            const resp = await axios.post(
+                endpoint,
+                { fileId: fileId.toString(), fileType },
+                { timeout: (parseInt(process.env.PY_TIMEOUT) || 30000) }
+            );
             return res.status(resp.status).json(resp.data);
         } catch (err) {
-            console.error("Error calling Python service (detect):", err.message || err);
-            // fallback to local spawn
-            try {
-                await spawnLocalPython(fileId.toString(), fileType);
-                return res.json({ status: "ok", fileId });
-            } catch (e) {
-                console.error("Fallback local python failed (detect):", e);
-                return res.status(500).json({ error: "Processing failed" });
-            }
-        }
-    } else {
-        // spawn local
-        try {
-            await spawnLocalPython(fileId.toString(), fileType);
-            return res.json({ status: "ok", fileId });
-        } catch (e) {
-            console.error("Local python failed (detect):", e);
-            return res.status(500).json({ error: "Processing failed" });
+            console.error("Error calling Python service:", err.message || err);
+            // fallback to local Python if remote fails
         }
     }
+
+    // Spawn local Python as fallback
+    try {
+        await spawnLocalPython(fileId.toString(), fileType);
+        return res.json({ status: "ok", fileId });
+    } catch (e) {
+        console.error("Local Python processing failed:", e);
+        return res.status(500).json({ error: "Processing failed" });
+    }
 });
+
 
 // Show file (decide image vs video). Returns HEAD content-type for detection and renders for GET.
 app.get("/file/:id", async (req, res) => {
