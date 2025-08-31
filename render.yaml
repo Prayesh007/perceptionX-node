@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: perceptionx-node
+    runtime: node
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: PYTHON_API_URL
+        value: https://perceptionx-python.onrender.com
+
