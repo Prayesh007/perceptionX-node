@@ -9,7 +9,6 @@ from io import BytesIO
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
-import socket
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from ultralytics import YOLO
@@ -21,9 +20,9 @@ import imageio_ffmpeg as ffmpeg
 from bson.binary import Binary
 from dotenv import load_dotenv
 
-load_dotenv() # Load environment variables from .env file
-
 # --------------------- CONFIG ------------------------
+load_dotenv()
+
 PORT = int(os.environ.get("PORT", 8000))
 MONGO_URI = os.environ.get("MONGO_URI")
 DATABASE_NAME = os.environ.get("DATABASE_NAME", "test")
@@ -74,7 +73,7 @@ def load_model():
         if not os.path.exists(WEIGHTS_PATH):
             ok = download_weights_if_missing()
             if not ok:
-                raise FileNotFoundError("YOLO model weights file not found and could not be downloaded.")
+                raise FileNotFoundError("YOLO model weights not found and could not be downloaded.")
         _MODEL = YOLO(WEIGHTS_PATH)
         print("🧠 YOLO model loaded.")
         return _MODEL
@@ -110,8 +109,12 @@ async def process_image(file_id, model):
     data, _ = await fetch_file_from_mongo(file_id)
     if not data:
         return False
+
     img = Image.open(BytesIO(data)).convert("RGB")
-    results = model(np.array(img))
+
+    # Run YOLO in a background thread (non-blocking)
+    results = await asyncio.to_thread(model, np.array(img))
+
     annotated = results[0].plot()
     bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
     success, buffer = cv2.imencode(".jpg", bgr)
@@ -126,60 +129,70 @@ async def process_video(file_id, model):
         return False
     tmp_in = os.path.join(tempfile.gettempdir(), f"input_{file_id}.mp4")
     tmp_out = os.path.join(tempfile.gettempdir(), f"out_{file_id}.avi")
+    mp4_path = tmp_out.replace(".avi", ".mp4")
+
     try:
         with open(tmp_in, "wb") as f:
             f.write(data)
+
         cap = cv2.VideoCapture(tmp_in)
         if not cap.isOpened():
             return False
+
         fps = cap.get(cv2.CAP_PROP_FPS) or 25
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         out = cv2.VideoWriter(tmp_out, cv2.VideoWriter_fourcc(*"XVID"), fps, (width, height))
+
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-            results = model(frame)
+
+            # Run YOLO in a background thread
+            results = await asyncio.to_thread(model, frame)
             annotated = results[0].plot()
             try:
                 annotated_bgr = cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR)
             except:
                 annotated_bgr = annotated
             out.write(annotated_bgr)
+
         cap.release()
         out.release()
-        
+
         ffmpeg_exe = ffmpeg.get_ffmpeg_exe()
-        mp4_path = tmp_out.replace(".avi", ".mp4")
-        subprocess.run([ffmpeg_exe, "-y", "-i", tmp_out, "-vcodec", "libx264", "-crf", "23", "-preset", "fast", mp4_path],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, timeout=300)
-        
+        subprocess.run(
+            [ffmpeg_exe, "-y", "-i", tmp_out, "-vcodec", "libx264", "-crf", "23", "-preset", "fast", mp4_path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, timeout=300
+        )
+
         with open(mp4_path, "rb") as f:
             processed_video = f.read()
-            
+
         return await save_processed_file(file_id, processed_video)
-    
-    except FileNotFoundError:
-        print("❌ Error: FFmpeg executable not found. Please ensure it's installed on your Render instance.")
-        return False
+
     except subprocess.CalledProcessError as e:
-        print(f"❌ FFmpeg conversion failed. Return code: {e.returncode}. Stderr: {e.stderr.decode()}")
+        print(f"❌ FFmpeg conversion failed. Stderr: {e.stderr.decode()}")
         return False
     except subprocess.TimeoutExpired:
         print("❌ FFmpeg conversion timed out.")
         return False
     finally:
         for f in [tmp_in, tmp_out, mp4_path]:
-            try: os.remove(f)
-            except: pass
+            try:
+                os.remove(f)
+            except:
+                pass
 
+# --------------------- PROCESS ------------------------
 async def run_process(file_id, file_type):
-    model = load_model()
+    if _MODEL is None:
+        raise RuntimeError("YOLO model is not loaded")
     if file_type.startswith("image"):
-        return await process_image(file_id, model)
+        return await process_image(file_id, _MODEL)
     elif file_type.startswith("video"):
-        return await process_video(file_id, model)
+        return await process_video(file_id, _MODEL)
     else:
         return False
 
@@ -196,7 +209,7 @@ async def startup_event():
         load_model()
         print("Service startup complete.")
     except Exception as e:
-        print(f"❌ CRITICAL ERROR: Model failed to load. Service will not function correctly. Reason: {e}")
+        print(f"❌ CRITICAL ERROR: {e}")
 
 @app.get("/")
 async def root():
@@ -205,18 +218,23 @@ async def root():
 @app.get("/health")
 async def health():
     if _MODEL is None:
-        raise HTTPException(status_code=503, detail="Service is not ready. Model failed to load.")
+        raise HTTPException(status_code=503, detail="Model not ready")
     return {"status": "ok"}
+
+@app.get("/warmup")
+async def warmup():
+    if _MODEL is None:
+        load_model()
+    return {"status": "ready"}
 
 @app.post("/process")
 async def process_endpoint(payload: ProcessRequest):
     if _MODEL is None:
-        raise HTTPException(status_code=503, detail="YOLO model is not ready. Processing cannot be performed.")
-    
+        raise HTTPException(status_code=503, detail="YOLO model not ready")
     try:
         ok = await run_process(payload.fileId, payload.fileType)
         if not ok:
-            raise HTTPException(status_code=500, detail="Processing failed for unknown reason.")
+            raise HTTPException(status_code=500, detail="Processing failed")
         return {"status": "ok", "fileId": payload.fileId}
     except Exception as e:
         print(f"❌ Processing failed for file {payload.fileId}: {e}")
