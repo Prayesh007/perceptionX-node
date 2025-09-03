@@ -232,7 +232,7 @@ nav ul li a:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 80%;
+    width: 70%;
     height: 100%;
 }
 
@@ -242,7 +242,7 @@ nav ul li a:hover {
     display: flex;
     overflow: auto;
     /* width: calc(100% - 0px); */
-    width: 60%;
+    width: 30%;
     height: 100%;
     /* position: absolute; */
     /* bottom: 0; */
@@ -797,7 +797,7 @@ button:hover::before {
 
 @media(max-width : 915px){
     .logo img {
-        width: 230px;
+        width: 200px;
         height: 25px;
     }
     .pc-navbar a {

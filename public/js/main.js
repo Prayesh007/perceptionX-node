@@ -1,266 +1,121 @@
-// // Import the THREE.js library
-// import * as THREE from "https://cdn.skypack.dev/three@0.129.0/build/three.module.js";
-// // To allow for the camera to move around the scene
-// import { OrbitControls } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js";
-// // To allow for importing the .gltf file
-// import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js";
-
-// // Create a Three.JS Scene
-// const scene = new THREE.Scene();
-// // Create a new camera with positions and angles
-// const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-// // Set which object to render
-// // You can change 'cube' to the name of the folder containing your new model
-// let objToRender = 'cube';
-
-// // Keep the 3D object on a global variable so we can access it later
-// let object;
-
-// // OrbitControls allow the camera to move around the scene
-// let controls;
-
-// // Variables to handle animation
-// let mixer; // This will play the animations from the GLTF file
-// const clock = new THREE.Clock(); // This will track time for smooth animation updates
-
-// // Instantiate a loader for the .gltf file
-// const loader = new GLTFLoader();
-
-// // Load the file
-// loader.load(
-//     `./models/${objToRender}/scene.gltf`,
-//     function (gltf) {
-//         // If the file is loaded, add it to the scene
-//         object = gltf.scene;
-//         // Scale down the object to make it much smaller
-//         object.scale.set(0.05, 0.05, 0.05);
-//         scene.add(object);
-
-//         // Check if the loaded model has any animations
-//         if (gltf.animations && gltf.animations.length) {
-//             mixer = new THREE.AnimationMixer(object);
-//             // Iterate over all animation clips and play them
-//             gltf.animations.forEach((clip) => {
-//                 mixer.clipAction(clip).play();
-//             });
-//         }
-//     },
-//     function (xhr) {
-//         // While it is loading, log the progress
-//         console.log(`Loading model: ${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`);
-//     },
-//     function (error) {
-//         // If there is an error, log it
-//         console.error("An error occurred loading the GLTF model:", error);
-//     }
-// );
-
-// // Instantiate a new renderer and set its size
-// const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Enable alpha for a transparent background
-// renderer.setSize(window.innerWidth, window.innerHeight);
-
-// // Add the renderer to the DOM
-// document.getElementById("container3D").appendChild(renderer.domElement);
-
-// // Set how far the camera will be from the 3D model
-// // We've adjusted this value to prevent the cube from being too big at the start
-// camera.position.z = 25; 
-
-// // The background is now handled by the renderer's alpha property, making the canvas transparent
-// // and allowing the HTML/CSS background to show through.
-
-// // Add lights to the scene for better visibility of the details
-// const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-// scene.add(ambientLight);
-
-// const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
-// directionalLight1.position.set(10, 10, 10);
-// scene.add(directionalLight1);
-
-// const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-// directionalLight2.position.set(-10, -10, -10);
-// scene.add(directionalLight2);
-
-
-// // This adds controls to the camera, so we can rotate / zoom it with the mouse
-// controls = new OrbitControls(camera, renderer.domElement);
-// controls.enableDamping = true; // Provides a smoother, more natural feel
-// controls.dampingFactor = 0.25;
-// controls.maxDistance = 50; // Prevents the user from zooming in too far
-// controls.minDistance = 20; // Prevents the user from zooming out too far
-
-// // Render the scene
-// function animate() {
-//     requestAnimationFrame(animate);
-
-//     // Update the animation mixer with the time elapsed since the last frame
-//     const delta = clock.getDelta();
-//     if (mixer) {
-//         mixer.update(delta);
-//     }
-//     
-//     // Update the orbit controls
-//     controls.update();
-
-//     // Render the scene with the standard renderer
-//     renderer.render(scene, camera);
-// }
-
-// // Add a listener to the window, so we can resize the window and the camera
-// window.addEventListener("resize", function () {
-//     camera.aspect = window.innerWidth / window.innerHeight;
-//     camera.updateProjectionMatrix();
-//     renderer.setSize(window.innerWidth, window.innerHeight);
-// });
-
-// // Start the 3D rendering
-// animate();
-
-
-
-
-
-// Import the THREE.js library
+// app.js
 import * as THREE from "https://cdn.skypack.dev/three@0.129.0/build/three.module.js";
-// To allow for the camera to move around the scene
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js";
-// To allow for importing the .gltf file
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js";
 
-// Create a Three.JS Scene
 const scene = new THREE.Scene();
-// Create a new camera with positions and angles
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// Set which object to render
-// You can change 'cube' to the name of the folder containing your new model
-let objToRender = 'cube';
-
-// Keep the 3D object on a global variable so we can access it later
-let object;
-
-// OrbitControls allow the camera to move around the scene
-let controls;
-
-// Variables to handle animation
-let mixer; // This will play the animations from the GLTF file
-const clock = new THREE.Clock(); // This will track time for smooth animation updates
-
-// Variables for mouse rotation
-let mouseX = 0;
-let mouseY = 0;
-let targetRotationY = 0;
-let targetRotationX = 0;
-
-// Instantiate a loader for the .gltf file
-const loader = new GLTFLoader();
-
-// Load the file
-loader.load(
-    `./models/${objToRender}/scene.gltf`,
-    function (gltf) {
-        // If the file is loaded, add it to the scene
-        object = gltf.scene;
-        // Scale down the object to make it much smaller
-        object.scale.set(0.05, 0.05, 0.05);
-        scene.add(object);
-
-        // Check if the loaded model has any animations
-        if (gltf.animations && gltf.animations.length) {
-            mixer = new THREE.AnimationMixer(object);
-            // Iterate over all animation clips and play them
-            gltf.animations.forEach((clip) => {
-                mixer.clipAction(clip).play();
-            });
-        }
-    },
-    function (xhr) {
-        // While it is loading, log the progress
-        console.log(`Loading model: ${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`);
-    },
-    function (error) {
-        // If there is an error, log it
-        console.error("An error occurred loading the GLTF model:", error);
-    }
+// Camera
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  2000
 );
+camera.position.set(0, 1, 6);
 
-// Instantiate a new renderer and set its size
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Enable alpha for a transparent background
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-
-// Add the renderer to the DOM
 document.getElementById("container3D").appendChild(renderer.domElement);
 
-// Set how far the camera will be from the 3D model
-// We've adjusted this value to prevent the cube from being too big at the start
-camera.position.z = 25; 
+// Lights
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(5, 10, 7);
+scene.add(dirLight);
 
-// The background is now handled by the renderer's alpha property, making the canvas transparent
-// and allowing the HTML/CSS background to show through.
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
 
-// Add lights to the scene for better visibility of the details
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
+// GLTF Loader
+const loader = new GLTFLoader();
+let mixer;
+const clock = new THREE.Clock();
+let model; // store loaded model for custom animation
+let t = 0; // time counter for bobbing
 
-const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
-directionalLight1.position.set(10, 10, 10);
-scene.add(directionalLight1);
+loader.load(
+  "./models/cube/scene.gltf", // <- all files in cube folder
+  (gltf) => {
+    model = gltf.scene;
+    scene.add(model);
 
-const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-directionalLight2.position.set(-10, -10, -10);
-scene.add(directionalLight2);
+    // Center & scale the model
+    const box = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
 
+    // Reposition so model is centered at origin
+    model.position.sub(center);
 
-// This adds controls to the camera, so we can rotate / zoom it with the mouse
-controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // Provides a smoother, more natural feel
-controls.dampingFactor = 0.25;
-controls.maxDistance = 50; // Prevents the user from zooming in too far
-controls.minDistance = 20; // Prevents the user from zooming out too far
-controls.enableRotate = false; // Disable OrbitControls rotation to use mouse movement
+    // Make it slightly bigger
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 3.2 / maxDim; // increased from 2.5
+    model.scale.setScalar(scale);
 
-// Add mousemove listener to update the target rotation
-document.addEventListener('mousemove', (event) => {
-    // Normalize mouse coordinates to a range of -1 to 1
-    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Move model a bit upward
+    model.position.y += 0.5; 
 
-    // Set the target rotation based on mouse position
-    targetRotationY = mouseX * (Math.PI / 2); // Adjusting the sensitivity of Y rotation
-    targetRotationX = mouseY * (Math.PI / 2); // Adjusting the sensitivity of X rotation
-});
-
-// Render the scene
-function animate() {
-    requestAnimationFrame(animate);
-
-    // Update the animation mixer with the time elapsed since the last frame
-    const delta = clock.getDelta();
-    if (mixer) {
-        mixer.update(delta);
-    }
-    
-    // Smoothly rotate the object towards the target rotation
-    if (object) {
-        object.rotation.y += (targetRotationY - object.rotation.y) * 0.05;
-        object.rotation.x += (targetRotationX - object.rotation.x) * 0.05;
-    }
-
-    // Update the orbit controls (for zooming and panning)
+    // Re-frame camera
+    const fov = camera.fov * (Math.PI / 180);
+    let camZ = Math.abs((maxDim * scale) / 2 / Math.tan(fov / 2));
+    camZ *= 1.5;
+    camera.position.set(0, (size.y * scale) / 4, camZ);
+    controls.target.set(0, 0, 0);
     controls.update();
 
-    // Render the scene with the standard renderer
-    renderer.render(scene, camera);
+    // Debug helper (green wireframe box) to see where model is
+    const helper = new THREE.Box3Helper(
+      new THREE.Box3().setFromObject(model),
+      0x00ff00
+    );
+    scene.add(helper);
+    setTimeout(() => scene.remove(helper), 3000);
+
+    // Play first animation if exists
+    if (gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(model);
+      const action = mixer.clipAction(gltf.animations[0]);
+      action.play();
+    }
+
+    console.log("✅ Model loaded and added to scene");
+  },
+  (xhr) => {
+    console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`);
+  },
+  (err) => {
+    console.error("Error loading model:", err);
+  }
+);
+
+// Animate
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+
+  if (mixer) {
+    // Run model's built-in animations if available
+    mixer.update(delta);
+  } else if (model) {
+    // Custom animation: rotate + bob
+    t += delta;
+    model.rotation.y += 0.5 * delta; // slow spin
+    model.position.y += Math.sin(t * 2) * 0.005; // gentle up/down bob (smaller offset since we moved it up)
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
 }
-
-// Add a listener to the window, so we can resize the window and the camera
-window.addEventListener("resize", function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// Start the 3D rendering
 animate();
 
+// Resize
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
