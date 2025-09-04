@@ -32,22 +32,29 @@ header h1 {
   font-weight: 900;
 }
 
-#container3D canvas {
+/* #container3D canvas {
   z-index: 9999;
   right: 0;
-  width: 40% !important;
   height: 100vh !important;
+  width: 40% !important;
   position: absolute;
   top: 0;
 }
+
+@media (max-width :800px) {
+  #container3D canvas{
+    width: 100% !important;
+    height: 50vh !important;
+  }
+} */
 </style>
 
 <body>
-  <main>
+  <!-- <main>
     <div id="container3D"></div>
     
 
-</main>
+</main> -->
 
 
   <div class="navbardiv">
@@ -80,7 +87,9 @@ header h1 {
       </nav>
   </div>
   <div class="main-content">
-      <div class="left-part">
+      <div id="container3D"></div>
+      
+        <div class="left-part">
           <div class="details">
             <%- body %>
         </div>
