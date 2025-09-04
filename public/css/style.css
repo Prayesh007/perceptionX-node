@@ -813,13 +813,13 @@ button:hover::before {
         .main-content {
             /* background-color: #000; */
             height: 100vh;
-            flex-direction: column;
+            flex-direction: column-reverse;
         }
     
         .left-part {
             /* position: absolute; */
             height: calc(100vh - 40vh - 82px);
-            margin-top: calc(35vh + 82px);
+            /* margin-top: calc(35vh + 82px); */
             /* height: 240px; */
             flex: none;
             /* width: fit-content; */
@@ -839,7 +839,8 @@ button:hover::before {
         }
     
         .right-part {
-            display: none;
+            /* display: none; */
+            height: 40vh;
 
         }
 
