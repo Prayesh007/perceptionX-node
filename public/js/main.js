@@ -69,12 +69,12 @@ loader.load(
     controls.update();
 
     // Debug helper (green wireframe box) to see where model is
-    const helper = new THREE.Box3Helper(
-      new THREE.Box3().setFromObject(model),
-      0x00ff00
-    );
-    scene.add(helper);
-    setTimeout(() => scene.remove(helper), 3000);
+    // const helper = new THREE.Box3Helper(
+    //   new THREE.Box3().setFromObject(model),
+    //   0x00ff00
+    // );
+    // scene.add(helper);
+    // setTimeout(() => scene.remove(helper), 3000);
 
     // Play first animation if exists
     if (gltf.animations.length) {

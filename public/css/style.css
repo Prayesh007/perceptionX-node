@@ -95,24 +95,45 @@ nav ul {
 
 
 nav ul li {
+    padding: 15px;
     list-style-type: none;
     line-height: 2.5rem;
-    text-align: center;
-    margin-top: 4rem;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    /* text-align: center; */
+    /* margin-top: 2rem; */
 }
 
+.last-child{
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+
+
+}
+
+element.style {
+}
+nav ul li a.active, nav ul li a:hover {
+    /* font-size: 4rem; */
+    /* color: rgb(181, 71, 148); */
+    /* transition: 0.5s ease; */
+}
 nav ul li a {
+    padding: 20px 40px;
+    /* font-weight: 500; */
+    font-size: 24px;
+    line-height: 32px;
+    color: #ffffffe6;
+    font-family: Inter V, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif;
     text-decoration: none;
     /* color: white; */
     font-size: 2rem;
     text-transform: capitalize;
-    font-family: "Baloo Bhaijaan 2", sans-serif;
+    /* font-family: "Baloo Bhaijaan 2", sans-serif; */
 }
 
 nav ul li a.active,
 nav ul li a:hover {
-    font-size: 4rem;
-    color: rgb(181, 71, 148);
+    /* font-size: 4rem; */
+    color: rgba(255, 255, 255, 0.3);
     transition: 0.5s ease;
 }
 
@@ -299,11 +320,6 @@ nav ul li a:hover {
 
 
 
-#upload-form{
-
-
-}
-
 #fileInput{
     font-size: 16px;
     background: white;
@@ -401,82 +417,6 @@ nav ul li a:hover {
 }
 
 
-
-.picture {
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    z-index: 1;
-}
-
-.picture video {
-    float: right;
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    z-index: 0;
-
-}
-
-
-@keyframes homeanimation {
-    0% {
-        filter: hue-rotate(0deg);
-    }
-
-    8.5% {
-        filter: hue-rotate(30deg);
-    }
-
-    17% {
-        filter: hue-rotate(60deg);
-    }
-
-    25.5% {
-        filter: hue-rotate(90deg);
-    }
-
-    33.5% {
-        filter: hue-rotate(120deg);
-    }
-
-    42% {
-        filter: hue-rotate(150deg);
-    }
-
-    50.5% {
-        filter: hue-rotate(180deg);
-    }
-
-    59% {
-        filter: hue-rotate(210deg);
-    }
-
-    67% {
-        filter: hue-rotate(240deg);
-    }
-
-    75.5% {
-        filter: hue-rotate(270deg);
-    }
-
-    84% {
-        filter: hue-rotate(300deg);
-    }
-
-    92.5% {
-        filter: hue-rotate(330deg);
-    }
-
-    100% {
-        filter: hue-rotate(360deg);
-    }
-
-
-}
 
 /* footer */
 
@@ -807,6 +747,7 @@ button:hover::before {
 #secondary-title{
     font-size: 1.8rem;
     line-height: 50px;
+    text-align: center;
 }
 }
 
@@ -863,95 +804,6 @@ button:hover::before {
             height: 50vh !important;
           }
     
-/*     
-        .main-content {
-            height: 100vh;
-        }
-    
-        .left-part {
-            margin-top: 1100px;
-            height: 240px;
-            flex: none;
-            width: fit-content;
-        }
-    
-        .right-part {
-            margin: 0;
-            padding-bottom: 40px;
-            flex: none;
-            width: 100%;
-            height: 76%;
-            top: 112px;
-        }
-    
-        .picture {
-            width: 90%;
-            margin: 0 5% 0 5%;
-        }
-    
-        .picture img {
-            border-radius: 0;
-        }
-    
-        .picture a {
-            border-radius: 0;
-        }
-    
-        .details {
-            width: 100vw;
-            margin-bottom: 200px;
-    
-        }
-    
-        .details h1 {
-            font-size: 30px;
-        }
-    
-        .details h3 {
-            font-size: 22px;
-            margin-top: 5px;
-        }
-    
-        .details p {
-            margin: 20px 0 20px 0;
-        }
-    
-        .btn-box {
-            width: 100%;
-    
-        }
-    
-        .btn-box a {
-            border: 2px solid rgb(0, 0, 0);
-            background-color: #ffffff;
-            color: rgb(0, 0, 0);
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            font-size: 1rem;
-            margin-right: 5px;
-            letter-spacing: 2px;
-    
-        }
-    
-        .footer {
-            width: 100%;
-            font-size: 1.5rem;
-        }
-    
-        .findme {
-            font-family: "Josefin Sans", sans-serif;
-        }
-    
-        .icons a:nth-child(1) {
-            margin: 0 10px;
-        }
-    
-        .icons a:nth-child(2) {
-            margin: 0 10px;
-        } */
         #container3D canvas{
             margin-top: 82px;
             width: 100% !important;
@@ -967,7 +819,7 @@ button:hover::before {
         .left-part {
             /* position: absolute; */
             height: calc(100vh - 40vh - 82px);
-            margin-top: calc(40vh + 82px);
+            margin-top: calc(35vh + 82px);
             /* height: 240px; */
             flex: none;
             /* width: fit-content; */
