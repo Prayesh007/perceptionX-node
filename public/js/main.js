@@ -1,7 +1,14 @@
+// ------------------------------------------------------------
 // app.js
 import * as THREE from "https://cdn.skypack.dev/three@0.129.0/build/three.module.js";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js";
+import { RGBELoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/RGBELoader.js";
+
+// Postprocessing
+import { EffectComposer } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 
 const scene = new THREE.Scene();
 
@@ -17,11 +24,34 @@ camera.position.set(0, 1, 6);
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
 document.getElementById("container3D").appendChild(renderer.domElement);
 
+// Composer for postprocessing
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+
+// Bloom effect
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.2, // strength
+  0.6, // radius
+  0.0  // threshold
+);
+composer.addPass(bloomPass);
+
+// HDRI Environment
+new RGBELoader()
+  .setPath("https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/")
+  .load("studio_small_08_1k.hdr", function (texture) {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+  });
+
 // Lights
-scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
 dirLight.position.set(5, 10, 7);
 scene.add(dirLight);
 
@@ -33,64 +63,56 @@ controls.enableDamping = true;
 const loader = new GLTFLoader();
 let mixer;
 const clock = new THREE.Clock();
-let model; // store loaded model for custom animation
-let t = 0; // time counter for bobbing
+let model;
+let t = 0;
 
 loader.load(
-  "./models/cube/scene.gltf", // <- all files in cube folder
+  "./models/cube/scene.gltf",
   (gltf) => {
     model = gltf.scene;
     scene.add(model);
 
-    // Center & scale the model
+    // --- Adjust reflections ---
+    model.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material.roughness = 0.5;
+        child.material.metalness = 0.1;
+        child.material.needsUpdate = true;
+      }
+    });
+
+    // Center & scale
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     box.getSize(size);
     const center = new THREE.Vector3();
     box.getCenter(center);
 
-    // Reposition so model is centered at origin
     model.position.sub(center);
 
-    // Make it slightly bigger
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 3.2 / maxDim; // increased from 2.5
+
+    // 🔹 Responsive scaling
+    const scale = window.innerWidth < 800 ? 1.7 / maxDim : 2.5 / maxDim;
     model.scale.setScalar(scale);
 
-    // Move model a bit upward
-    model.position.y += 0.5; 
+    model.position.y += 0.2;
 
-    // Re-frame camera
-    const fov = camera.fov * (Math.PI / 180);
-    let camZ = Math.abs((maxDim * scale) / 2 / Math.tan(fov / 2));
-    camZ *= 1.5;
-    camera.position.set(0, (size.y * scale) / 4, camZ);
+    // Keep camera at a good distance
+    camera.position.set(0, 1, 6);
     controls.target.set(0, 0, 0);
     controls.update();
 
-    // Debug helper (green wireframe box) to see where model is
-    // const helper = new THREE.Box3Helper(
-    //   new THREE.Box3().setFromObject(model),
-    //   0x00ff00
-    // );
-    // scene.add(helper);
-    // setTimeout(() => scene.remove(helper), 3000);
-
-    // Play first animation if exists
     if (gltf.animations.length) {
       mixer = new THREE.AnimationMixer(model);
       const action = mixer.clipAction(gltf.animations[0]);
       action.play();
     }
 
-    console.log("✅ Model loaded and added to scene");
+    console.log(`✅ Model loaded with scale ${scale.toFixed(2)}`);
   },
-  (xhr) => {
-    console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`);
-  },
-  (err) => {
-    console.error("Error loading model:", err);
-  }
+  (xhr) => console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`),
+  (err) => console.error("Error loading model:", err)
 );
 
 // Animate
@@ -99,17 +121,15 @@ function animate() {
   const delta = clock.getDelta();
 
   if (mixer) {
-    // Run model's built-in animations if available
     mixer.update(delta);
   } else if (model) {
-    // Custom animation: rotate + bob
     t += delta;
-    model.rotation.y += 0.5 * delta; // slow spin
-    model.position.y += Math.sin(t * 2) * 0.005; // gentle up/down bob (smaller offset since we moved it up)
+    model.rotation.y += 0.5 * delta;
+    model.position.y += Math.sin(t * 2) * 0.005;
   }
 
   controls.update();
-  renderer.render(scene, camera);
+  composer.render(); // use composer instead of renderer
 }
 animate();
 
@@ -118,4 +138,5 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 });
