@@ -836,7 +836,7 @@ button:hover::before {
         }
     
         .right-part {
-            /* display: none; */
+            display: none;
             height: 40vh;
 
         }
@@ -875,6 +875,14 @@ button:hover::before {
             margin-right: 5px;
             letter-spacing: 2px;
     
+        }
+
+        #output{
+            display: block;
+        }
+
+        .uploads{
+            width: 100%;
         }
     
     }
