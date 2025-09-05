@@ -884,5 +884,8 @@ button:hover::before {
         .uploads{
             width: 100%;
         }
+        .processed{
+            width: 100%;
+        }
     
     }
