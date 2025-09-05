@@ -815,7 +815,7 @@ button:hover::before {
     
         .left-part {
             /* position: absolute; */
-            height: calc(100vh - 35vh - 82px);
+            height: calc(100vh - 35vh - 40px);
             /* margin-top: calc(35vh + 82px); */
             /* height: 240px; */
             flex: none;
