@@ -143,7 +143,7 @@ nav ul li a:hover {
     display: none;
     position: relative;
     float: right;
-    line-height: 5rem;
+    line-height: 90px;
     margin-right: 50px;
     font-size: 2rem;
     color: white;
@@ -155,7 +155,7 @@ nav ul li a:hover {
     position: relative;
     display: none;
     float: right;
-    line-height: 5rem;
+    line-height: 90px;
     margin-right: 3rem;
     font-size: 2rem;
     color: white;
@@ -799,17 +799,12 @@ button:hover::before {
         .pc-navbar{
             display: none;
         }
-
-        #container3D canvas{
-            margin-top: 82px;
-            width: 100% !important;
-            height: 50vh !important;
-          }
     
         #container3D canvas{
+            border-top: 1px solid rgba(255, 255, 255, .1);
             margin-top: 82px;
             width: 100% !important;
-            height: 40vh !important;
+            height: 35vh !important;
         }
 
         .main-content {
@@ -820,7 +815,7 @@ button:hover::before {
     
         .left-part {
             /* position: absolute; */
-            height: calc(100vh - 40vh - 82px);
+            height: calc(100vh - 35vh - 82px);
             /* margin-top: calc(35vh + 82px); */
             /* height: 240px; */
             flex: none;
@@ -830,7 +825,7 @@ button:hover::before {
         }
 
         #secondary-title {
-            font-size: 1.5rem;
+            font-size: 2rem;
             line-height: 35px;
         }
 
