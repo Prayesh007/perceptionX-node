@@ -1,11 +1,11 @@
 Model Information:
-* title:	Placeholder-Cube 5
-* source:	https://sketchfab.com/3d-models/placeholder-cube-5-68052d2217874be99fc4aea7c02e94fa
-* author:	3DHaupt (https://sketchfab.com/dennish2010)
+* title:	RUBIK'S CUBE
+* source:	https://sketchfab.com/3d-models/rubiks-cube-4cc7c1bf585f4b929ddd32f6cab3ba58
+* author:	FromSi (https://sketchfab.com/fromsi665)
 
 Model License:
 * license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
 * requirements:	Author must be credited. Commercial use is allowed.
 
 If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
-This work is based on "Placeholder-Cube 5" (https://sketchfab.com/3d-models/placeholder-cube-5-68052d2217874be99fc4aea7c02e94fa) by 3DHaupt (https://sketchfab.com/dennish2010) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+This work is based on "RUBIK'S CUBE" (https://sketchfab.com/3d-models/rubiks-cube-4cc7c1bf585f4b929ddd32f6cab3ba58) by FromSi (https://sketchfab.com/fromsi665) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
