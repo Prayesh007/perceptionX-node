@@ -17,6 +17,13 @@
     box-sizing: border-box;
 }
 
+:root{
+    --blue-a: #dbe7ff;   /* pale blue */
+    --blue-b: #b5cffb;   /* mid blue */
+    --orange-a: #ffd8b0; /* light orange */
+    --orange-b: #ff9a5a; /* warmer orange */
+  }
+
 body,
 html {
     width: 100%;
@@ -27,8 +34,41 @@ html {
     /* animation: coloranimation3 48s ease-in infinite; */
     /* background: linear-gradient(90deg, #000, #131313 ); */
     /* background-color: #D7E4F2; */
+    background-color: var(--blue-a);
+  /* base gradient */
+  background-image:
+    linear-gradient(120deg, var(--blue-a) 0%, var(--blue-b) 45%, var(--orange-a) 70%, var(--orange-b) 100%);
+  background-size: cover;
+  background-attachment: fixed;
+  color: #0b1220;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 
 }
+
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(40% 40% at 75% 65%, rgba(255,150,60,0.45) 0%, rgba(255,150,60,0.20) 15%, transparent 45%),
+      radial-gradient(60% 60% at 20% 25%, rgba(170,185,255,0.18) 0%, transparent 45%);
+    filter: blur(40px) saturate(1.05);
+    mix-blend-mode: overlay;
+    opacity: 0.95;
+  }
+  
+  /* subtle top-to-bottom sheen to mimic metallic reflection */
+  body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 10%, rgba(0,0,0,0.02) 90%);
+    transform: translateZ(0);
+    mix-blend-mode: soft-light;
+  }
 
 
 
@@ -49,6 +89,7 @@ html {
 
 
 .logo {
+    filter: invert(1);
     display: inline-flex;
     align-items: center;
     height: 82px;
@@ -82,6 +123,7 @@ html {
 }
 
 nav ul {
+    filter: invert(1);
     background: #000000;
     top: 0;
     width: 100%;
@@ -140,6 +182,7 @@ nav ul li a:hover {
 }
 
 #checkbtn {
+    filter: invert(1);
     display: none;
     position: relative;
     float: right;
@@ -152,6 +195,7 @@ nav ul li a:hover {
 }
 
 #closemenu {
+    filter: invert(1);
     position: relative;
     display: none;
     float: right;
@@ -242,6 +286,7 @@ nav ul li a:hover {
     width: 40% !important;
     position: absolute;
     top: 0;
+    background: transparent !important;
   }
 
 
@@ -255,8 +300,8 @@ nav ul li a:hover {
 }
 
 .left-part {
-    background-color: black;
-    color: white;
+    /* background-color: black; */
+    color: black;
     position: relative;
     z-index: 999;
     height: calc(100vh - 132px);
@@ -268,7 +313,7 @@ nav ul li a:hover {
 }
 
 .right-part {
-    background-color: black;
+    /* background-color: black; */
     /* margin: 20px; */
     display: flex;
     overflow: auto;
@@ -292,7 +337,7 @@ nav ul li a:hover {
 }
 
 .details h1{
-    background: #feffff -webkit-gradient(linear, left top, right top, from(#ffffff), to(#ffffff), color-stop(0.5, #0e61ff)) 0 0 no-repeat;
+    background: #000 -webkit-gradient(linear, left top, right top, from(#000), to(#000), color-stop(0.5, #0e61ff)) 0 0 no-repeat;
     font-size: 40px;
     line-height: 1.2;
     font-family: "Maven Pro", sans-serif;
@@ -440,7 +485,7 @@ nav ul li a:hover {
     top: 50%;
     writing-mode: vertical-rl;
     background: black;
-    color: white;
+    color: black;
     padding: 10px;
     text-align: center;
 
@@ -459,18 +504,18 @@ nav ul li a:hover {
 
 
 .icons a:nth-child(1) {
-    color: white;
+    color: black;
     transform: translateY(0%) rotate(90deg);
     margin: 15px 10px;
 }
 
 .icons a:nth-child(2) {
-    color: white;
+    color: black;
     margin: 0 10px;
 }
 
 .icons a:nth-child(3) {
-    color: white;
+    color: black;
 }
 
 .scroll-icon {
@@ -488,7 +533,7 @@ nav ul li a:hover {
 
 
 .getStarted{
-    background-color: white;
+    background-color: #fbbe4d;
     padding: 15px 30px;
     cursor: pointer;
     text-decoration: none;
@@ -555,12 +600,12 @@ nav ul li a:hover {
 
 #secondary-title{
     
-        font-weight: 300;
+        font-weight: 500;
         line-height: 80px;
         font-size: 2.8rem;
         font-family: "Maven Pro", serif;
         font-family: var(--font-aeonik), -apple-system, Arial, sans-serif;
-        background: #feffff -webkit-gradient(linear, left top, right top, from(#ffffff), to(#ffffff), color-stop(0.5, #d70eff)) 0 0 no-repeat;
+        background: #000 -webkit-gradient(linear, left top, right top, from(#000), to(#000), color-stop(0.5, #d70eff)) 0 0 no-repeat;
         color: rgba(255, 255, 255, 0.1);
         -webkit-background-clip: text;
         animation: animate 5s infinite;
