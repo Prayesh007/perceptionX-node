@@ -847,9 +847,9 @@ button:hover::before {
     
         #container3D canvas{
             border-top: 1px solid rgba(255, 255, 255, .1);
-            margin-top: 82px;
+            /* margin-top: 82px; */
             width: 100% !important;
-            height: 35vh !important;
+            height: 49vh !important;
         }
 
         .main-content {
