@@ -382,7 +382,7 @@
 
 
 // --------------------------------------------------
-
+the 
 
 // ------------------------------------------------------------
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.129.0/build/three.module.js';
@@ -408,7 +408,13 @@ renderer.setClearColor(0x000000, 0); // Transparent background
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.5;
-document.getElementById("container3D").appendChild(renderer.domElement);
+
+const container3D = document.getElementById("container3D");
+if (container3D) {
+    container3D.appendChild(renderer.domElement);
+} else {
+    console.error("container3D element not found!");
+}
 
 // HDRI Environment
 new RGBELoader()
@@ -434,6 +440,7 @@ controls.maxDistance = camera.position.length();
 
 // GLTF Loader
 const loader = new GLTFLoader();
+loader.setPath('/models/cube/'); // Set base path for model
 let mixer;
 const clock = new THREE.Clock();
 let model;
@@ -471,7 +478,7 @@ if (window.innerWidth < 800) {
 }
 
 loader.load(
-  "./models/cube/scene.gltf",
+  "scene.gltf",
   (gltf) => {
     model = gltf.scene;
     scene.add(model);

@@ -1,12 +1,11 @@
 let icon = document.querySelector('.scroll-icon');
-window.addEventListener('scroll', function () {
-
-
-    if (window.scrollY > 0) {
-        icon.classList.add('hidden');
-    }
-
-});
+if (icon) {
+    window.addEventListener('scroll', function () {
+        if (window.scrollY > 0) {
+            icon.classList.add('hidden');
+        }
+    });
+}
 
 const body = document.body;
 let toggle = document.querySelectorAll('.light-theme')
@@ -16,17 +15,15 @@ let buttons = document.querySelectorAll('.button-light');
 
 
 
-let themeToggle = this.document.getElementById('theme');
+let themeToggle = document.getElementById('theme');
 
+if (themeToggle) {
+    document.addEventListener("DOMContentLoaded",function(){
+        themeToggle.checked = false;
+        themeToggle.dispatchEvent(new Event('change'));
+    })
 
-document.addEventListener("DOMContentLoaded",function(){
-    themeToggle.checked = false;
-    themeToggle.dispatchEvent(new Event('change'));
-    
-})
-
-
-themeToggle.addEventListener('change', function() {
+    themeToggle.addEventListener('change', function() {
 
     if (!(themeToggle.checked)) {
         body.classList.add('light-theme')
@@ -41,11 +38,13 @@ themeToggle.addEventListener('change', function() {
             togg.classList.add('light-theme-shadow')
             togg.classList.remove('dark-theme-shadow')
             });
-        heading.classList.add('light-theme-h1')
-        heading.classList.remove('dark-theme-h1')
+        if (heading) {
+            heading.classList.add('light-theme-h1')
+            heading.classList.remove('dark-theme-h1')
+        }
         buttons.forEach(button =>{
-        button.classList.add('button-light')
-        button.classList.remove('button-dark')
+            button.classList.add('button-light')
+            button.classList.remove('button-dark')
         });
         
     } else {
@@ -54,18 +53,21 @@ themeToggle.addEventListener('change', function() {
         toggle.forEach(togg =>{
             togg.classList.add('dark-theme')
             togg.classList.remove('light-theme')
-            });
+        });
         body.classList.add('dark-theme-shadow')
         body.classList.remove('light-theme-shadow')
         toggleShadow.forEach(togg =>{
             togg.classList.add('dark-theme-shadow')
             togg.classList.remove('light-theme-shadow')
-            });
-        heading.classList.add('dark-theme-h1')
-        heading.classList.remove('light-theme-h1')
+        });
+        if (heading) {
+            heading.classList.add('dark-theme-h1')
+            heading.classList.remove('light-theme-h1')
+        }
         buttons.forEach(button =>{
             button.classList.add('button-dark')
             button.classList.remove('button-light')
-            });
+        });
     }
 });
+}
