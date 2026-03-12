@@ -2,9 +2,24 @@ services:
   - type: web
     name: perceptionx-node
     runtime: node
-    buildCommand: "npm install"
+    plan: starter  # or free, starter, standard, etc.
+    buildCommand: "npm install && npm run build"
     startCommand: "npm start"
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PYTHON_API_URL
-        value: https://perceptionx-python.onrender.com
+        value: https://perceptionx-python.onrender.com  # Update with your Python service URL
+      - key: MONGO_URI
+        sync: false  # Will be set manually in Render dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 10000  # Render sets this automatically, but you can specify
 
