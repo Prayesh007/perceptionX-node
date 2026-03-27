@@ -68,7 +68,7 @@ function calculateSceneOverview(detectionEvents) {
     // Calculate average per frame (not sum across all frames)
     let framesWithVehicles = 0;
     let framesWithPedestrians = 0;
-    
+
     detectionEvents.forEach(event => {
         if (event.detectedObjects && Array.isArray(event.detectedObjects) && event.detectedObjects.length > 0) {
             framesWithData++;
@@ -111,12 +111,12 @@ function calculateSceneOverview(detectionEvents) {
     // This is better than average for static cameras
     const vehicleCounts = {};
     const pedestrianCounts = {};
-    
+
     detectionEvents.forEach(event => {
         if (event.detectedObjects && Array.isArray(event.detectedObjects)) {
             let frameVehicles = 0;
             let framePedestrians = 0;
-            
+
             event.detectedObjects.forEach(obj => {
                 const className = (obj.class || '').toLowerCase();
                 if (VEHICLE_CLASSES.some(v => className.includes(v))) {
@@ -125,25 +125,25 @@ function calculateSceneOverview(detectionEvents) {
                     framePedestrians++;
                 }
             });
-            
+
             vehicleCounts[frameVehicles] = (vehicleCounts[frameVehicles] || 0) + 1;
             pedestrianCounts[framePedestrians] = (pedestrianCounts[framePedestrians] || 0) + 1;
         }
     });
-    
+
     // Find MODE (most common count)
-    const vehicleMode = Object.keys(vehicleCounts).reduce((a, b) => 
+    const vehicleMode = Object.keys(vehicleCounts).reduce((a, b) =>
         vehicleCounts[a] > vehicleCounts[b] ? a : b, '0'
     );
-    const pedestrianMode = Object.keys(pedestrianCounts).reduce((a, b) => 
+    const pedestrianMode = Object.keys(pedestrianCounts).reduce((a, b) =>
         pedestrianCounts[a] > pedestrianCounts[b] ? a : b, '0'
     );
-    
+
     // Use MODE as the representative unique count (most common scene state)
     // This avoids counting the same object multiple times across frames
     const estimatedUniqueVehicles = parseInt(vehicleMode) || Math.round(avgVehiclesPerFrame);
     const estimatedUniquePedestrians = parseInt(pedestrianMode) || Math.round(avgPedestriansPerFrame);
-    
+
     // For infrastructure, use average (less variable)
     const estimatedUniqueInfrastructure = Math.round((framesWithData > 0 ? totalInfrastructure / framesWithData : 0));
     const estimatedUniqueObjects = estimatedUniqueVehicles + estimatedUniquePedestrians + estimatedUniqueInfrastructure;
@@ -156,7 +156,7 @@ function calculateSceneOverview(detectionEvents) {
     let peakObjects = 0;
     let peakVehicleTimestamp = null;
     let peakPedestrianTimestamp = null;
-    
+
     // First pass: Find peak counts
     detectionEvents.forEach(event => {
         if (event.detectedObjects && Array.isArray(event.detectedObjects)) {
@@ -164,7 +164,7 @@ function calculateSceneOverview(detectionEvents) {
             let framePedestrians = 0;
             let frameInfrastructure = 0;
             let frameObjects = 0;
-            
+
             event.detectedObjects.forEach(obj => {
                 const className = (obj.class || '').toLowerCase();
                 frameObjects++;
@@ -176,7 +176,7 @@ function calculateSceneOverview(detectionEvents) {
                     frameInfrastructure++;
                 }
             });
-            
+
             if (frameVehicles > peakVehicles) {
                 peakVehicles = frameVehicles;
             }
@@ -187,16 +187,16 @@ function calculateSceneOverview(detectionEvents) {
             peakObjects = Math.max(peakObjects, frameObjects);
         }
     });
-    
+
     // Second pass: Find all frames with peak counts, then select a representative one (middle of peak period)
     const peakVehicleFrames = [];
     const peakPedestrianFrames = [];
-    
+
     detectionEvents.forEach(event => {
         if (event.detectedObjects && Array.isArray(event.detectedObjects)) {
             let frameVehicles = 0;
             let framePedestrians = 0;
-            
+
             event.detectedObjects.forEach(obj => {
                 const className = (obj.class || '').toLowerCase();
                 if (VEHICLE_CLASSES.some(v => className.includes(v))) {
@@ -205,7 +205,7 @@ function calculateSceneOverview(detectionEvents) {
                     framePedestrians++;
                 }
             });
-            
+
             if (frameVehicles === peakVehicles && peakVehicles > 0) {
                 peakVehicleFrames.push(event);
             }
@@ -214,25 +214,25 @@ function calculateSceneOverview(detectionEvents) {
             }
         }
     });
-    
+
     // Select representative frame (middle of peak period) and extract timestamp
     if (peakVehicleFrames.length > 0) {
         const middleIndex = Math.floor(peakVehicleFrames.length / 2);
         const representativeFrame = peakVehicleFrames[middleIndex];
         let timestamp = representativeFrame.timestamp;
-        
+
         // Convert to seconds if timestamp is in milliseconds (timestamp > 1000000 suggests milliseconds)
         if (timestamp && timestamp > 1000000) {
             timestamp = timestamp / 1000;
         }
         peakVehicleTimestamp = timestamp || null;
     }
-    
+
     if (peakPedestrianFrames.length > 0) {
         const middleIndex = Math.floor(peakPedestrianFrames.length / 2);
         const representativeFrame = peakPedestrianFrames[middleIndex];
         let timestamp = representativeFrame.timestamp;
-        
+
         // Convert to seconds if timestamp is in milliseconds (timestamp > 1000000 suggests milliseconds)
         if (timestamp && timestamp > 1000000) {
             timestamp = timestamp / 1000;
@@ -243,7 +243,7 @@ function calculateSceneOverview(detectionEvents) {
     // Calculate detection frequency (percentage of frames with detections)
     const vehicleDetectionFrequency = totalFrames > 0 ? Math.round((framesWithVehicles / totalFrames) * 100) : 0;
     const pedestrianDetectionFrequency = totalFrames > 0 ? Math.round((framesWithPedestrians / totalFrames) * 100) : 0;
-    
+
     // Calculate detection rate (detections per minute)
     // Estimate duration: assume ~30 FPS if no timestamps, or use actual timestamps
     let estimatedDurationSeconds = 0;
@@ -257,18 +257,18 @@ function calculateSceneOverview(detectionEvents) {
             estimatedDurationSeconds = detectionEvents.length / 30;
         }
     }
-    const detectionRatePerMinute = estimatedDurationSeconds > 0 
+    const detectionRatePerMinute = estimatedDurationSeconds > 0
         ? Math.round((totalVehicles / estimatedDurationSeconds) * 60)
         : 0;
     const pedestrianDetectionRatePerMinute = estimatedDurationSeconds > 0
         ? Math.round((totalPedestrians / estimatedDurationSeconds) * 60)
         : 0;
-    
+
     // Calculate pedestrian activity level based on frequency and average density
     // Use 5 levels: Very Low, Low, Moderate, High, Very High
     // Fixed logic: 1 person should be "Low", not "Moderate"
     let pedestrianActivityLevel = 'Very Low';
-    
+
     // Priority: Check density first for accurate classification
     // Very High: High density (>=3 per frame) AND good frequency (>=50%)
     if (avgPedestriansPerFrame >= 3 && pedestrianDetectionFrequency >= 50) {
@@ -291,12 +291,12 @@ function calculateSceneOverview(detectionEvents) {
     else {
         pedestrianActivityLevel = 'Very Low';
     }
-    
+
     // Calculate pedestrian activity score (0-100) based on multiple factors
     const frequencyScore = pedestrianDetectionFrequency; // 0-100
     const densityScore = Math.min(avgPedestriansPerFrame * 20, 100); // Scale avg to 0-100
     const pedestrianActivityScore = Math.round((frequencyScore * 0.6 + densityScore * 0.4));
-    
+
     return {
         totalObjects: estimatedUniqueObjects,
         vehicles: estimatedUniqueVehicles,
@@ -365,7 +365,7 @@ function calculateSceneDensity(detectionEvents) {
                 const className = (obj.class || '').toLowerCase();
                 totalCount++;
                 // Quick class check (optimized)
-                if (className.includes('car') || className.includes('truck') || className.includes('bus') || 
+                if (className.includes('car') || className.includes('truck') || className.includes('bus') ||
                     className.includes('motorcycle') || className.includes('bicycle') || className.includes('vehicle')) {
                     vehicleCount++;
                 } else if (className.includes('person') || className.includes('pedestrian')) {
@@ -389,11 +389,11 @@ function calculateSceneDensity(detectionEvents) {
 
     // Calculate averages based on sampled frames
     const sampledFramesCount = densityFrames.length;
-    const avgVehicleDensity = sampledFramesCount > 0 
-        ? totalVehicleCount / sampledFramesCount 
+    const avgVehicleDensity = sampledFramesCount > 0
+        ? totalVehicleCount / sampledFramesCount
         : 0;
-    const avgPedestrianDensity = sampledFramesCount > 0 
-        ? totalPedestrianCount / sampledFramesCount 
+    const avgPedestrianDensity = sampledFramesCount > 0
+        ? totalPedestrianCount / sampledFramesCount
         : 0;
 
     // Determine density levels
@@ -439,7 +439,7 @@ function calculateSceneDensity(detectionEvents) {
             videoDurationSeconds = detectionEvents.length / 30;
         }
     }
-    
+
     return {
         frames: densityFrames,
         vehicleDensityLevel,
@@ -500,10 +500,10 @@ function calculateObjectDistribution(detectionEvents) {
             percentage: ((count / total) * 100).toFixed(1)
         }))
         .sort((a, b) => b.value - a.value);
-    
+
     // Find most common vehicle type
     const mostCommonVehicleType = distributionArray.length > 0 ? distributionArray[0] : null;
-    
+
     // Return array for backward compatibility with ObjectDistribution component
     return distributionArray;
 }
@@ -516,14 +516,14 @@ function calculateTemporalTrends(detectionEvents, timeWindowSeconds = 60) {
 
     const firstTimestamp = detectionEvents[0].timestamp || 0;
     const timeBins = {};
-    
+
     // OPTIMIZATION: Process every 5th event for trends
     const sampleRate = Math.max(1, Math.floor(detectionEvents.length / 100)); // Max 100 data points (reduced)
 
     for (let i = 0; i < detectionEvents.length; i += sampleRate) {
         const event = detectionEvents[i];
         const bin = Math.floor((event.timestamp - firstTimestamp) / timeWindowSeconds);
-        
+
         if (!timeBins[bin]) {
             timeBins[bin] = {
                 vehicles: 0,
@@ -538,7 +538,7 @@ function calculateTemporalTrends(detectionEvents, timeWindowSeconds = 60) {
                 const obj = objects[j];
                 const className = (obj.class || '').toLowerCase();
                 // Quick class check
-                if (className.includes('car') || className.includes('truck') || className.includes('bus') || 
+                if (className.includes('car') || className.includes('truck') || className.includes('bus') ||
                     className.includes('motorcycle') || className.includes('bicycle') || className.includes('vehicle')) {
                     timeBins[bin].vehicles++;
                 } else if (className.includes('person') || className.includes('pedestrian')) {
@@ -552,7 +552,7 @@ function calculateTemporalTrends(detectionEvents, timeWindowSeconds = 60) {
 
     const trends = [];
     const maxBin = Math.max(...Object.keys(timeBins).map(Number), 0);
-    
+
     for (let bin = 0; bin <= maxBin; bin++) {
         const timeLabel = `${Math.floor((bin * timeWindowSeconds) / 60)}:${String((bin * timeWindowSeconds) % 60).padStart(2, '0')}`;
         trends.push({
@@ -585,7 +585,7 @@ function calculateConfidenceAnalytics(detectionEvents) {
     let confidenceCount = 0;
     let lowConfidenceCount = 0;
     const LOW_CONFIDENCE_THRESHOLD = 0.5;
-    
+
     // OPTIMIZATION: Sample frames for confidence trend (every 10th frame)
     const trendSampleRate = Math.max(1, Math.floor(detectionEvents.length / 30)); // Max 30 data points (reduced)
 
@@ -600,7 +600,7 @@ function calculateConfidenceAnalytics(detectionEvents) {
                 const obj = objects[j];
                 const conf = obj.confidence || 0;
                 const className = (obj.class || '').toLowerCase();
-                
+
                 if (conf > 0) {
                     totalConfidence += conf;
                     confidenceCount++;
@@ -630,15 +630,15 @@ function calculateConfidenceAnalytics(detectionEvents) {
         }
     }
 
-    const avgConfidence = confidenceCount > 0 
-        ? Math.round((totalConfidence / confidenceCount) * 1000) / 1000 
+    const avgConfidence = confidenceCount > 0
+        ? Math.round((totalConfidence / confidenceCount) * 1000) / 1000
         : 0;
 
     const avgConfidenceByClass = {};
     Object.keys(confidenceByClass).forEach(className => {
         const data = confidenceByClass[className];
-        avgConfidenceByClass[className] = data.count > 0 
-            ? Math.round((data.sum / data.count) * 1000) / 1000 
+        avgConfidenceByClass[className] = data.count > 0
+            ? Math.round((data.sum / data.count) * 1000) / 1000
             : 0;
     });
 
@@ -662,7 +662,7 @@ function generateDetectionAlerts(detectionEvents) {
 
     let consecutiveFramesWithoutSignal = 0;
     let previousVehicleCount = 0;
-    
+
     // OPTIMIZATION: Sample every 5th frame for alerts (still catch most issues)
     const alertSampleRate = Math.max(1, Math.floor(detectionEvents.length / 500)); // Max 500 checks (reduced)
 
@@ -775,8 +775,8 @@ function calculatePerformanceMetrics(detectionEvents) {
 
     const totalDuration = (detectionEvents[detectionEvents.length - 1].timestamp || 0) - (detectionEvents[0].timestamp || 0);
     const fps = totalDuration > 0 ? detectionEvents.length / totalDuration : 0;
-    const detectionThroughput = totalDuration > 0 
-        ? Math.round((detectionEvents.length / totalDuration) * 60) 
+    const detectionThroughput = totalDuration > 0
+        ? Math.round((detectionEvents.length / totalDuration) * 60)
         : 0; // detections per minute
 
     const avgLatency = inferenceTimes.length > 0
@@ -829,8 +829,8 @@ function computeDetectionAnalytics(detectionEvents) {
 
         // Limit events to prevent timeout (safety check - already sampled in app.js)
         const MAX_EVENTS = 300; // Match app.js limit - very aggressive
-        const eventsToProcess = detectionEvents.length > MAX_EVENTS 
-            ? detectionEvents.slice(0, MAX_EVENTS) 
+        const eventsToProcess = detectionEvents.length > MAX_EVENTS
+            ? detectionEvents.slice(0, MAX_EVENTS)
             : detectionEvents;
 
         console.log(`⚡ Computing analytics for ${eventsToProcess.length} events...`);
@@ -844,10 +844,10 @@ function computeDetectionAnalytics(detectionEvents) {
         const confidenceAnalytics = calculateConfidenceAnalytics(eventsToProcess);
         const alerts = generateDetectionAlerts(eventsToProcess);
         const performanceMetrics = calculatePerformanceMetrics(eventsToProcess);
-        
+
         // Add most common vehicle type to sceneOverview
-        const mostCommonVehicle = objectDistribution && objectDistribution.length > 0 
-            ? objectDistribution[0] 
+        const mostCommonVehicle = objectDistribution && objectDistribution.length > 0
+            ? objectDistribution[0]
             : null;
         if (mostCommonVehicle) {
             sceneOverview.mostCommonVehicleType = mostCommonVehicle.name;

@@ -88,6 +88,7 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
           <div className="hidden lg:flex items-center gap-8">
             <NavLink to="/" isActive={isActive('/')}>Home</NavLink>
             <NavLink to="/detect" isActive={isActive('/detect')}>Detect</NavLink>
+            <NavLink to="/live-detect" isActive={isActive('/live-detect')}>Live Detect</NavLink>
             <NavLink to="/analytics" isActive={isActive('/analytics')}>Analytics</NavLink>
             <NavLink to="/pricing" isActive={isActive('/pricing')}>Pricing</NavLink>
             <NavLink to="/documentation" isActive={isActive('/documentation')}>Documentation</NavLink>
@@ -246,6 +247,7 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
           <div className="px-6 py-4 space-y-1">
             <MobileNavLink to="/" isActive={isActive('/')} onClick={toggleMenu}>Home</MobileNavLink>
             <MobileNavLink to="/detect" isActive={isActive('/detect')} onClick={toggleMenu}>Detect</MobileNavLink>
+            <MobileNavLink to="/live-detect" isActive={isActive('/live-detect')} onClick={toggleMenu}>Live Detect</MobileNavLink>
             <MobileNavLink to="/analytics" isActive={isActive('/analytics')} onClick={toggleMenu}>Analytics</MobileNavLink>
             <MobileNavLink to="/pricing" isActive={isActive('/pricing')} onClick={toggleMenu}>Pricing</MobileNavLink>
             <MobileNavLink to="/documentation" isActive={isActive('/documentation')} onClick={toggleMenu}>Documentation</MobileNavLink>

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocat
 import { useEffect } from 'react'
 import Home from './pages/Home'
 import Detect from './pages/Detect'
+import LiveDetect from './pages/LiveDetect'
 import Result from './pages/Result'
 import Analytics from './pages/Analytics'
 import Login from './components/Login'
@@ -99,6 +100,14 @@ function App() {
         <Route 
           path="/detect" 
           element={<Detect />}
+        />
+        <Route 
+          path="/live-detect" 
+          element={
+            <ProtectedRoute>
+              <LiveDetect />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/result/:fileId" 

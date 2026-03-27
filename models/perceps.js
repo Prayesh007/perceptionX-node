@@ -38,4 +38,8 @@ const fileSchema = new mongoose.Schema({
     }]
 });
 
+// Add a compound index to support filtering by user and sorting by date
+// This prevents "Sort exceeded memory limit" errors and improves performance
+fileSchema.index({ userId: 1, uploadDate: -1 });
+
 module.exports = mongoose.model("File", fileSchema);

@@ -40,6 +40,8 @@ const AnalyticsDetail = () => {
           }
           
           console.log(`📊 Setting analytics data for file: ${fileId}`);
+          const receivedServiceType = response.data.serviceType || 'traffic-monitoring';
+          console.log(`📊 Received serviceType from API: ${receivedServiceType}`);
           setAnalyticsData(response.data.analyticsData)
           setFileInfo({
             filename: response.data.filename,
@@ -49,7 +51,7 @@ const AnalyticsDetail = () => {
             originalUrl: response.data.originalUrl,
             processedUrl: response.data.processedUrl,
             isVideo: response.data.isVideo,
-            serviceType: response.data.serviceType || 'traffic-monitoring'
+            serviceType: receivedServiceType
           })
           setLoading(false)
           setError(null) // Clear any previous errors
@@ -289,6 +291,7 @@ const AnalyticsDetail = () => {
   }
 
   const serviceType = fileInfo?.serviceType || 'traffic-monitoring'
+  console.log(`🎯 Rendering dashboard for serviceType: ${serviceType}`)
 
   if (serviceType === 'wildlife-monitoring') {
     return (
