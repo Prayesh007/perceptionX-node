@@ -36,7 +36,7 @@ const Home3D = () => {
     // Camera
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight || 384 // Default to h-96 (384px)
-    
+
     const camera = new THREE.PerspectiveCamera(
       40, // Slightly narrower FOV to fit better
       width / height,
@@ -56,7 +56,7 @@ const Home3D = () => {
     renderer.toneMappingExposure = 2.0
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    
+
     if (containerRef.current) {
       containerRef.current.appendChild(renderer.domElement)
     }
@@ -65,7 +65,7 @@ const Home3D = () => {
     // Enhanced lighting setup for maximum visibility
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5)
     scene.add(ambientLight)
-    
+
     // Main directional light from top-right - stronger
     const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.0)
     dirLight1.position.set(5, 8, 5)
@@ -183,12 +183,12 @@ const Home3D = () => {
           transparent: true,
           opacity: 0.9
         })
-        
+
         const corners = [
           [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
           [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]
         ]
-        
+
         corners.forEach((corner, index) => {
           const marker = new THREE.Mesh(cornerMarkerGeometry, cornerMarkerMaterial.clone())
           marker.position.set(
@@ -250,17 +250,17 @@ const Home3D = () => {
         const particleCount = 40
         const particlesGeometry = new THREE.BufferGeometry()
         const positions = new Float32Array(particleCount * 3)
-        
+
         for (let i = 0; i < particleCount * 3; i += 3) {
           const radius = boundingBoxSize * 0.7 + Math.random() * boundingBoxSize * 0.3
           const theta = Math.random() * Math.PI * 2
           const phi = Math.random() * Math.PI
-          
+
           positions[i] = radius * Math.sin(phi) * Math.cos(theta)
           positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
           positions[i + 2] = radius * Math.cos(phi)
         }
-        
+
         particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
         const particlesMaterial = new THREE.PointsMaterial({
           color: 0xffffff,
@@ -274,7 +274,7 @@ const Home3D = () => {
         particlesRef.current = particles
 
         // 7. Create Dimension Labels (using HTML overlays - will be handled in render)
-        
+
         // Force initial render multiple times to ensure visibility
         renderer.render(scene, camera)
         setTimeout(() => renderer.render(scene, camera), 100)
@@ -304,7 +304,7 @@ const Home3D = () => {
         fallbackCube.castShadow = true
         fallbackCube.receiveShadow = true
         fallbackCube.position.set(0, 0, 0)
-        
+
         // Add black edges for segmented Rubik's Cube look
         const edgesGeometry = new THREE.EdgesGeometry(geometry)
         const edgesMaterial = new THREE.LineBasicMaterial({
@@ -313,7 +313,7 @@ const Home3D = () => {
         })
         const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial)
         fallbackCube.add(edges)
-        
+
         scene.add(fallbackCube)
         modelRef.current = fallbackCube
 
@@ -339,12 +339,12 @@ const Home3D = () => {
           transparent: true,
           opacity: 0.9
         })
-        
+
         const corners = [
           [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
           [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]
         ]
-        
+
         corners.forEach((corner) => {
           const marker = new THREE.Mesh(cornerMarkerGeometry, cornerMarkerMaterial.clone())
           marker.position.set(
@@ -406,17 +406,17 @@ const Home3D = () => {
         const particleCount = 40
         const particlesGeometry = new THREE.BufferGeometry()
         const positions = new Float32Array(particleCount * 3)
-        
+
         for (let i = 0; i < particleCount * 3; i += 3) {
           const radius = boundingBoxSize * 0.7 + Math.random() * boundingBoxSize * 0.3
           const theta = Math.random() * Math.PI * 2
           const phi = Math.random() * Math.PI
-          
+
           positions[i] = radius * Math.sin(phi) * Math.cos(theta)
           positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
           positions[i + 2] = radius * Math.cos(phi)
         }
-        
+
         particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
         const particlesMaterial = new THREE.PointsMaterial({
           color: 0xffffff,
@@ -428,7 +428,7 @@ const Home3D = () => {
         particles.position.set(0, 0, 0)
         scene.add(particles)
         particlesRef.current = particles
-        
+
         // Force initial render
         renderer.render(scene, camera)
       }
@@ -439,7 +439,7 @@ const Home3D = () => {
       // Use window dimensions for full-page interaction
       const mouseX = (event.clientX / window.innerWidth) * 2 - 1
       const mouseY = (event.clientY / window.innerHeight) * 2 - 1
-      
+
       targetRotationRef.current.y = mouseX * sensitivity
       targetRotationRef.current.x = -mouseY * sensitivity
     }
@@ -468,12 +468,12 @@ const Home3D = () => {
       if (modelRef.current) {
         currentRotationRef.current.x += (targetRotationRef.current.x - currentRotationRef.current.x) * 0.05
         currentRotationRef.current.y += (targetRotationRef.current.y - currentRotationRef.current.y) * 0.05
-        
+
         // Add slow auto-rotation when not interacting
         if (Math.abs(targetRotationRef.current.x) < 0.01 && Math.abs(targetRotationRef.current.y) < 0.01) {
           currentRotationRef.current.y += delta * 0.3
         }
-        
+
         modelRef.current.rotation.x = currentRotationRef.current.x
         modelRef.current.rotation.y = currentRotationRef.current.y
       }
@@ -525,7 +525,7 @@ const Home3D = () => {
           const radius = Math.sqrt(positions[i] ** 2 + positions[i + 1] ** 2 + positions[i + 2] ** 2)
           const theta = Math.atan2(positions[i + 1], positions[i]) + delta * 0.1
           const phi = Math.acos(positions[i + 2] / radius) + delta * 0.05
-          
+
           positions[i] = radius * Math.sin(phi) * Math.cos(theta)
           positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
           positions[i + 2] = radius * Math.cos(phi)
@@ -544,13 +544,13 @@ const Home3D = () => {
       if (containerRef.current && rendererRef.current && cameraRef.current) {
         const width = containerRef.current.clientWidth
         const height = containerRef.current.clientHeight || 384
-        
+
         camera.aspect = width / height
         camera.updateProjectionMatrix()
         renderer.setSize(width, height)
       }
     }
-    
+
     // Initial resize
     handleResize()
     window.addEventListener('resize', handleResize)
@@ -560,11 +560,11 @@ const Home3D = () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseleave', handleMouseLeave)
       window.removeEventListener('resize', handleResize)
-      
+
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
-      
+
       if (rendererRef.current) {
         rendererRef.current.dispose()
         if (containerRef.current && rendererRef.current.domElement) {
@@ -575,10 +575,10 @@ const Home3D = () => {
   }, [])
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="w-full h-full min-h-[400px] lg:min-h-[500px] overflow-hidden flex items-center justify-center relative"
-      style={{ 
+      style={{
         background: 'transparent',
         cursor: 'grab',
         display: 'flex',
@@ -589,10 +589,10 @@ const Home3D = () => {
       }}
     >
       {/* HTML Overlays for Detection Labels */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none z-20"
-        style={{ 
-          width: '100%', 
+        style={{
+          width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
